@@ -1,102 +1,173 @@
-void(function(STEP, PERSPECTIVE) {
-	var COLOURS = ["#C33", "#ea4c88", "#663399", "#0066cc", "#669900", "#ffcc33", "#ff9900", "#996633"];
-	
-	function getColour(depth) {
-		return COLOURS[depth % (COLOURS.length - 1)]
+"use strict";
+
+((step, perspective) => {
+
+	const COLORS = [
+		"#c33",
+		"#ea4c88",
+		"#639",
+		"#06c",
+		"#690",
+		"#fc3",
+		"#f90",
+		"#963"
+	];
+
+	function getColor(depth) {
+		return COLORS[depth % (COLORS.length - 1)];
 	}
-	
-	function getFaceHTML(x, y, z, w, h, r, c) {
-		var common = "position:absolute;-webkit-transform-origin: 0 0 0;";
-		var visual = "background:" + c + ";";
-		var dimensions = "width:" + w + "px; height:" + h + "px;";
-		var translate = "translate3d(" + x + "px," + y + "px," + z + "px)";
-		var rotate = "rotateX(" + 270 + "deg) rotateY(" + r + "deg)";
-		var transform = "-webkit-transform:" + translate + rotate + ";"; 
-		var div = "<div style='" + common + visual + dimensions + transform + "'></div>";
-		return div;
+
+	function getFaceHTML(x, y, z, width, height, rotateYDeg, color) {
+
+		const multiLineToSingle = string =>
+			string.trim().split("\n").map(string => string.trim()).join(" ");
+
+		const common = multiLineToSingle(`
+position: absolute;
+transform-origin: left top;
+        `);
+		const visual = `background: ${color};`;
+		const dimensions = multiLineToSingle(`
+width: ${width}px;
+height: ${height}px;
+		`);
+
+		const translate = `translate3d(${x}px, ${y}px, ${z}px)`;
+		const rotate = `rotateX(${270}deg) rotateY(${rotateYDeg}deg)`;
+		const transform = `transform: ${translate} ${rotate};`;
+
+		const div = "div";
+		return `<${div} style='${
+			[common, visual, dimensions, transform].join(" ")
+		}'></${div}>`;
 	}
-	
-	var stepDelta = 0.001, facesHTML = "";
+
+	const stepDelta = 0.001;
+	let facesHTML = "";
+
 	function traverse(element, depth, offsetLeft, offsetTop) {
-		var childNodes = element.childNodes, l = childNodes.length;
-		for (var i = 0; i < l; i++) {
-			var childNode = childNodes[i];
+
+		const childNodes = element.childNodes;
+		const length = childNodes.length;
+
+		for (let i = 0; i < length; i++) {
+			const childNode = childNodes[i];
+
 			if (childNode.nodeType === 1) {
-				childNode.style.overflow = 'visible';
-				childNode.style.WebkitTransformStyle = 'preserve-3d';
-				childNode.style.WebkitTransform = 'translateZ(' + (STEP + (l - i) * stepDelta).toFixed(3) + 'px)';
-				
-				var elementBodyOffsetLeft = offsetLeft,
-					elementBodyOffsetTop = offsetTop;
-				
+				childNode.style.overflow = "visible";
+				childNode.style.transformStyle = "preserve-3d";
+				childNode.style.transform = `translateZ(${(step + (length - i) * stepDelta).toFixed(3)}px)`;
+
+				let elementBodyOffsetLeft = offsetLeft;
+				let elementBodyOffsetTop = offsetTop;
+
 				if (childNode.offsetParent === element) {
 					elementBodyOffsetLeft += element.offsetLeft;
 					elementBodyOffsetTop += element.offsetTop;
 				}
-				
+
 				traverse(childNode, depth + 1, elementBodyOffsetLeft, elementBodyOffsetTop);
-				
-				// top
-				facesHTML += getFaceHTML(elementBodyOffsetLeft + childNode.offsetLeft, 
-						elementBodyOffsetTop + childNode.offsetTop, (depth + 1) * STEP,
-						childNode.offsetWidth, STEP, 0, getColour(depth));
-				// right
-				facesHTML += getFaceHTML(elementBodyOffsetLeft + childNode.offsetLeft + childNode.offsetWidth, 
-						elementBodyOffsetTop + childNode.offsetTop, (depth + 1) * STEP,
-						childNode.offsetHeight, STEP, 270, getColour(depth));
-				// bottom
-				facesHTML += getFaceHTML(elementBodyOffsetLeft + childNode.offsetLeft, 
-						elementBodyOffsetTop + childNode.offsetTop + childNode.offsetHeight, (depth + 1) * STEP,
-						childNode.offsetWidth, STEP, 0, getColour(depth));
-				// left
-				facesHTML += getFaceHTML(elementBodyOffsetLeft + childNode.offsetLeft, 
-						elementBodyOffsetTop + childNode.offsetTop, (depth + 1) * STEP,
-						childNode.offsetHeight, STEP, 270, getColour(depth));
+
+				const commonZ = (depth + 1) * step;
+				const color = getColor(depth);
+
+				// Top
+				facesHTML += getFaceHTML(
+					elementBodyOffsetLeft + childNode.offsetLeft,
+					elementBodyOffsetTop + childNode.offsetTop,
+					commonZ,
+					childNode.offsetWidth,
+					step,
+					0,
+					color);
+
+				// Right
+				facesHTML += getFaceHTML(
+					elementBodyOffsetLeft + childNode.offsetLeft + childNode.offsetWidth,
+					elementBodyOffsetTop + childNode.offsetTop,
+					commonZ,
+					childNode.offsetHeight,
+					step,
+					270,
+					color);
+
+				// Bottom
+				facesHTML += getFaceHTML(
+					elementBodyOffsetLeft + childNode.offsetLeft,
+					elementBodyOffsetTop + childNode.offsetTop + childNode.offsetHeight,
+					commonZ,
+					childNode.offsetWidth,
+					step,
+					0,
+					color);
+
+				// Left
+				facesHTML += getFaceHTML(
+					elementBodyOffsetLeft + childNode.offsetLeft,
+					elementBodyOffsetTop + childNode.offsetTop,
+					commonZ,
+					childNode.offsetHeight,
+					step,
+					270,
+					color);
 			}
 		}
 	}
-	
-	var body = document.body;
-	body.style.overflow = 'visible';
-	body.style.WebkitTransformStyle = 'preserve-3d';
-	body.style.WebkitPerspective = PERSPECTIVE;
-	
-	var xCenter = (window.innerWidth/2).toFixed(2);
-	var yCenter = (window.innerHeight/2).toFixed(2);
-	body.style.WebkitPerspectiveOrigin = body.style.WebkitTransformOrigin = xCenter + "px " + yCenter +"px";
-	
+
+	const body = document.body;
+	body.style.overflow = "visible";
+	body.style.transformStyle = "preserve-3d";
+	body.style.perspective = perspective;
+
+	const getCenterAsString = length => (length / 2).toFixed(2);
+	const origin = `${getCenterAsString(innerWidth)}px ${getCenterAsString(innerHeight)}px`;
+	body.style.perspectiveOrigin = origin;
+	body.style.transformOrigin = origin;
+
 	traverse(body, 0, 0, 0);
-	
-	var faces = document.createElement("DIV");
+
+	const faces = document.createElement("div");
 	faces.style.display = "none";
 	faces.style.position = "absolute";
 	faces.style.top = 0;
 	faces.innerHTML = facesHTML;
 	body.appendChild(faces);
 
-	var mode = "NO_FACES";	
-	document.addEventListener("mousemove", function (e) {
-		if (mode !== "DISABLED") {
-			var xrel = e.screenX / screen.width;
-			var yrel = 1 - (e.screenY / screen.height);
-			var xdeg = (yrel * 360 - 180).toFixed(2);
-			var ydeg = (xrel * 360 - 180).toFixed(2);
-			body.style.WebkitTransform = "rotateX(" + xdeg + "deg) rotateY(" + ydeg + "deg)";
+	const Modes = {
+		DISABLED: -1,
+		NO_FACES: 0,
+		FACES: 1
+	};
+	let mode = Modes.NO_FACES;
+
+	document.addEventListener("mousemove", event => {
+
+		if (mode !== Modes.DISABLED) {
+			const xRel = event.screenX / screen.width;
+			const yRel = 1 - (event.screenY / screen.height);
+			const relToDegAsString = rel => (rel * 360 - 180).toFixed(2);
+			body.style.transform = `rotateX(${relToDegAsString(yRel)}deg) rotateY(${relToDegAsString(xRel)}deg)`;
 		}
 	}, true);
-	
-	document.addEventListener("mouseup", function (e) {
+
+	document.addEventListener("mouseup", () => {
 		switch (mode) {
-		case "NO_FACES":
-			mode = "FACES";
-			faces.style.display = "";
-			break;
-		case "FACES":
-			mode = "NO_FACES";
-			faces.style.display = "none";
-			break;
+
+		    case Modes.NO_FACES: {
+				mode = Modes.FACES;
+				faces.style.display = "";
+				break;
+			}
+
+			case Modes.FACES: {
+				mode = Modes.NO_FACES;
+				faces.style.display = "none";
+				break;
+			}
+
+			default: {
+				throw new RangeError("Incorrect faces mode");
+			}
 		}
 	}, true);
-	
-	
-} (25, 5000)); 
+})(25, 5000);
