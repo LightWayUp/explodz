@@ -20,26 +20,21 @@
 
     function getFaceHTML(x, y, z, width, height, rotateYDeg, color) {
 
-        const multiLineToSingle = string =>
-            string.trim().split("\n").map(string => string.trim()).join(" ");
+        const template = document.createElement(DIV);
 
-        const common = multiLineToSingle(`
-position: absolute;
-transform-origin: left top;
-        `);
-        const visual = `background: ${color};`;
-        const dimensions = multiLineToSingle(`
-width: ${width}px;
-height: ${height}px;
-        `);
+        new Map()
+        .set("position", "absolute")
+        .set("transform-origin", ["left", "top"])
+        .set("background", color)
+        .set("width", `${width}px`)
+        .set("height", `${height}px`)
+        .set("transform", [
+            `translate3d(${x}px, ${y}px, ${z}px)`,
+            `rotateX(${270}deg)`,
+            `rotateY(${rotateYDeg}deg)`])
+        .forEach((value, key) => template.style[key] = Array.isArray(value) ? value.join(" ") : value);
 
-        const translate = `translate3d(${x}px, ${y}px, ${z}px)`;
-        const rotate = `rotateX(${270}deg) rotateY(${rotateYDeg}deg)`;
-        const transform = `transform: ${translate} ${rotate};`;
-
-        return `<${DIV} style='${
-            [common, visual, dimensions, transform].join(" ")
-        }'></${DIV}>`;
+        return template.outerHTML;
     }
 
     const stepDelta = 0.001;
